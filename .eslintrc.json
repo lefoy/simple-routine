@@ -1,0 +1,61 @@
+{
+    "env": {
+      "browser": true,
+      "node": true,
+      "es6": true
+    },
+    "plugins": [
+      "align-assignments"
+    ],
+    "extends": [
+      "airbnb",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "sourceType": "module",
+      "ecmaFeatures": {
+        "experimentalObjectRestSpread": true
+      }
+    },
+    "rules": {
+      "no-restricted-syntax": 0,
+      "align-assignments/align-assignments": 2,
+      "class-methods-use-this": 0,
+      "default-param-last": 0,
+      "import/no-cycle": 0,
+      "import/no-named-as-default-member": 0,
+      "import/no-unresolved": [2, { "ignore": [ "NativeModules" ] }],
+      "indent": [2, 2],
+      "max-len": 0,
+      "func-names": 0,
+      "brace-style": 0,
+      "no-console": 0,
+      "no-multi-spaces": 0,
+      "no-extend-native": 0,
+      "newline-per-chained-call": 0,
+      "no-param-reassign": 0,
+      "no-throw-literal": 0,
+      "prefer-promise-reject-errors": 0,
+      "quotes": [2, "double"],
+      "global-require": 0,
+      "import/no-import-module-exports": 0,
+      "require-atomic-updates": 0,
+      "require-await": 2,
+      "prefer-destructuring": 0,
+      "no-plusplus": 0,
+      "import/no-dynamic-require": 0,
+      "import/no-extraneous-dependencies": 0,
+      "no-await-in-loop": 0,
+      "key-spacing": [2, {
+        "multiLine": {
+          "beforeColon": false,
+          "afterColon": true
+        },
+        "align": {
+          "beforeColon": true,
+          "afterColon": true,
+          "on": "colon"
+        }
+      }]
+    }
+  }
