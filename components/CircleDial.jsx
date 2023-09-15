@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect } from "react";
-import { Text, View, PanResponder } from "react-native";
+import {
+  Text, View, PanResponder, TextInput,
+} from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 
 import { useTheme } from "../ThemeContext";
@@ -92,6 +94,26 @@ function CircleDial({
     },
   });
 
+  const handleInputChange = (text) => {
+    if (text === "") {
+      setPercent(0);
+      onChange(0);
+      return;
+    }
+
+    const parsed = parseInt(text, 10);
+    if (!Number.isNaN(parsed) && parsed <= max) {
+      setPercent(parsed / max);
+      onChange(parsed);
+    } else if (parsed > max) {
+      setPercent(1);
+      onChange(max);
+    } else {
+      setPercent(0);
+      onChange(0);
+    }
+  };
+
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <View {...panResponder.panHandlers} ref={circleRef} onLayout={onLayout} style={styles.circleDialContainer}>
@@ -115,7 +137,13 @@ function CircleDial({
       </Svg>
       <View style={styles.circleDialContent} height={paddedRadius * 2} width={paddedRadius * 2}>
         <Text style={[styles.text, styles.circleDialTitle]}>{title}</Text>
-        <Text style={[styles.text, styles.circleDialText]}>{Math.round(percent * max)}</Text>
+        <TextInput
+          style={[styles.text, styles.circleDialText]}
+          value={String(Math.round(percent * max))}
+          onChangeText={handleInputChange}
+          keyboardType="numeric"
+          maxLength={3}
+        />
         <Text style={[styles.text, styles.circleDialUnit]}>{unit}</Text>
       </View>
     </View>

@@ -37,6 +37,7 @@ const routineList = (theme) => {
       justifyContent    : "space-between",
       borderBottomWidth : 1,
       borderColor       : colors.lowOpacity,
+      backgroundColor   : colors.background,
     },
     routineEditItemContainerRight: {
       flex       : 1,

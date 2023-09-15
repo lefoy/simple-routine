@@ -6,6 +6,7 @@ import React, { useState, useLayoutEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import * as StoreReview from "expo-store-review";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
@@ -58,6 +59,10 @@ function RoutineScreen({ route, navigation }) {
   const checkForCompletion = async (items) => {
     if (items.every((item) => item.completed || item.skipped)) {
       await completeRoutine(routineId);
+      if (await StoreReview.hasAction()) {
+        StoreReview.requestReview();
+      }
+
       navigation.navigate("RoutineCompleted", { routineId, routineName });
     }
   };

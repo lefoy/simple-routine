@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import * as NavigationBar from "expo-navigation-bar";
+import uuid from "react-native-uuid";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
@@ -23,95 +24,65 @@ function SettingsScreen({ navigation }) {
   const styles                        = getStyles({ isDarkMode });
   const colors                        = getColors({ isDarkMode });
 
-  const [isLoading, setIsLoading]                       = useState(true);
-  const [isFullscreenEnabled, setFullscreenEnabled]     = useState(false);
-  const [isNotificationEnabled, setNotificationEnabled] = useState(false);
-  const [isShowDaysInList, setShowDaysInList]           = useState(false);
-  const [isShowStatsInList, setShowStatsInList]         = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings]   = useState({
+    isStatusBarHidden     : false,
+    isNavBarHidden        : false,
+    isNotificationEnabled : false,
+    isShowDaysInList      : false,
+    isShowStatsInList     : false,
+  });
+
+  const toggleSwitch = async (key) => {
+    let newValue;
+    switch (key) {
+    case "isStatusBarHidden":
+      StatusBar.setHidden(!settings.isStatusBarHidden);
+      newValue = !settings.isStatusBarHidden;
+      break;
+    case "isNavBarHidden":
+      NavigationBar.setVisibilityAsync(settings.isNavBarHidden ? "visible" : "hidden");
+      newValue = !settings.isNavBarHidden;
+      break;
+    case "isNotificationEnabled":
+      newValue = settings.isNotificationEnabled
+        ? false
+        : await askForNotificationPermission();
+      if (settings.isNotificationEnabled) {
+        await clearAllNotifications();
+      }
+      break;
+    case "isShowDaysInList":
+    case "isShowStatsInList":
+      newValue = !settings[key];
+      break;
+    default:
+      return;
+    }
+    setSettings((prevSettings) => ({ ...prevSettings, [key]: newValue }));
+    await AsyncStorage.setItem(key, newValue.toString());
+  };
 
   const fetchSettings = async () => {
-    const isFullscreenEnabledSetting = await AsyncStorage.getItem("isFullscreenEnabled");
-    setFullscreenEnabled(isFullscreenEnabledSetting === "true");
-
-    const isNotificationEnabledSetting = await AsyncStorage.getItem("isNotificationEnabled");
-    setNotificationEnabled(isNotificationEnabledSetting === "true");
-
-    const isShowDaysInListSetting = await AsyncStorage.getItem("isShowDaysInList");
-    setShowDaysInList(isShowDaysInListSetting === "true");
-
-    const isShowStatsInListSetting = await AsyncStorage.getItem("isShowStatsInList");
-    setShowStatsInList(isShowStatsInListSetting === "true");
-
+    const keys        = Object.keys(settings);
+    const newSettings = {};
+    for (const key of keys) {
+      const value      = await AsyncStorage.getItem(key);
+      newSettings[key] = value === "true";
+    }
+    setSettings(newSettings);
     setIsLoading(false);
   };
 
   useFocusEffect(React.useCallback(() => { fetchSettings(); }, []));
 
-  const toggleFullscreenSwitch = async () => {
-    let enabled;
-    if (!isFullscreenEnabled) {
-      StatusBar.setHidden(true);
-      NavigationBar.setVisibilityAsync("hidden");
-      enabled = true;
-    } else {
-      StatusBar.setHidden(false);
-      NavigationBar.setVisibilityAsync("visible");
-      enabled = false;
-    }
-    setFullscreenEnabled(enabled);
-    await AsyncStorage.setItem("isFullscreenEnabled", enabled.toString());
-  };
-
-  const toggleNotificationSwitch = async () => {
-    let enabled;
-    if (!isNotificationEnabled) {
-      enabled = await askForNotificationPermission();
-    } else {
-      await clearAllNotifications();
-      enabled = false;
-    }
-    setNotificationEnabled(enabled);
-    await AsyncStorage.setItem("isNotificationEnabled", enabled.toString());
-  };
-
-  const toggleShowDaysInListSwitch = async () => {
-    let enabled;
-    if (!isShowDaysInList) {
-      enabled = true;
-    } else {
-      enabled = false;
-    }
-    setShowDaysInList(enabled);
-    await AsyncStorage.setItem("isShowDaysInList", enabled.toString());
-  };
-
-  const toggleShowStatsInListSwitch = async () => {
-    let enabled;
-    if (!isShowStatsInList) {
-      enabled = true;
-    } else {
-      enabled = false;
-    }
-    setShowStatsInList(enabled);
-    await AsyncStorage.setItem("isShowStatsInList", enabled.toString());
-  };
-
   const settingsData = [
-    {
-      id: "1", label: "Dark Mode", value: isDarkMode, onToggle: (value) => setIsDarkMode(value),
-    },
-    {
-      id: "2", label: "Fullscreen", value: isFullscreenEnabled, onToggle: toggleFullscreenSwitch,
-    },
-    {
-      id: "3", label: "Enable Notifications", value: isNotificationEnabled, onToggle: toggleNotificationSwitch,
-    },
-    {
-      id: "4", label: "Show Days In Routine List", value: isShowDaysInList, onToggle: toggleShowDaysInListSwitch,
-    },
-    {
-      id: "5", label: "Show Stats In Routine List", value: isShowStatsInList, onToggle: toggleShowStatsInListSwitch,
-    },
+    { label: "Dark Mode", value: isDarkMode, onToggle: () => setIsDarkMode(!isDarkMode) },
+    { label: "Hide Status Bar", value: settings.isStatusBarHidden, onToggle: () => toggleSwitch("isStatusBarHidden") },
+    { label: "Hide Navigation Bar", value: settings.isNavBarHidden, onToggle: () => toggleSwitch("isNavBarHidden") },
+    { label: "Enable Notifications", value: settings.isNotificationEnabled, onToggle: () => toggleSwitch("isNotificationEnabled") },
+    { label: "Show Days In Routine List", value: settings.isShowDaysInList, onToggle: () => toggleSwitch("isShowDaysInList") },
+    { label: "Show Stats In Routine List", value: settings.isShowStatsInList, onToggle: () => toggleSwitch("isShowStatsInList") },
   ];
 
   const deleteAnalyticsData = async () => {
@@ -173,7 +144,7 @@ function SettingsScreen({ navigation }) {
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: "", headerLeft });
-  }, [navigation, isDarkMode, isShowDaysInList, isShowStatsInList]);
+  }, [navigation, isDarkMode]);
 
   const renderSettingItem = ({ item }) => (
     <View style={styles.settingRow}>
@@ -219,7 +190,7 @@ function SettingsScreen({ navigation }) {
         style={styles.container}
         data={settingsData}
         renderItem={renderSettingItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={() => uuid.v4()}
         ItemSeparatorComponent={separator}
         ListFooterComponent={renderFooter}
       />

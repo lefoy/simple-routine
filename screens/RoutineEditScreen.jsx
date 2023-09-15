@@ -1,13 +1,13 @@
-import PropTypes from "prop-types";
-import { Picker } from "@react-native-picker/picker";
-import {
-  View, Text, TextInput, TouchableOpacity, Alert, Switch, ScrollView,
-} from "react-native";
 import React, { useState, useLayoutEffect } from "react";
+import {
+  View, Text, TextInput, TouchableOpacity, Alert, Switch, ScrollView, Vibration,
+} from "react-native";
+import PropTypes from "prop-types";
 import { useFocusEffect } from "@react-navigation/native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { Picker } from "@react-native-picker/picker";
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
 
@@ -26,9 +26,11 @@ function RoutineEditScreen({ route, navigation }) {
 
   const { routineId } = route.params;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [routine, setRoutine]     = useState(getRoutineStructure());
-  const [isDirty, setIsDirty]     = useState(false);
+  const [isLoading, setIsLoading]                       = useState(true);
+  const [routine, setRoutine]                           = useState(getRoutineStructure());
+  const [selectedRoutineItemId, setSelectedRoutineItem] = useState(null);
+  const [isDeleteMode, setIsDeleteMode]                 = useState(false);
+  const [isDirty, setIsDirty]                           = useState(false);
 
   const fetchRoutine = async () => {
     const storedRoutines = await AsyncStorage.getItem("routines");
@@ -43,14 +45,68 @@ function RoutineEditScreen({ route, navigation }) {
     setIsLoading(false);
   };
 
-  useFocusEffect(React.useCallback(() => { fetchRoutine(); }, []));
+  const handleExitDeleteMode = () => {
+    setIsDeleteMode(false);
+    setSelectedRoutineItem(null);
+  };
 
-  const cancel = () => {
+  const saveRoutine = async () => {
+    delete routine.new;
+
+    if (routine.name === "") {
+      routine.name = "New Routine";
+    }
+
+    await updateRoutine(routine);
+    await setIsDirty(false);
+  };
+
+  const confirmDirty = (onPress) => {
+    if (isDirty) {
+      Alert.alert("Save Changes", "You have unsaved changes. Would you like to save them?", [
+        { text: "Cancel", style: "cancel", onPress },
+        {
+          text    : "Save",
+          onPress : async () => {
+            await saveRoutine();
+            onPress();
+          },
+        },
+      ]);
+    } else {
+      onPress();
+    }
+  };
+
+  const deleteRoutineAndBack = async () => {
+    await deleteRoutine(routineId);
     navigation.goBack();
   };
 
+  useFocusEffect(React.useCallback(() => {
+    fetchRoutine();
+    return () => {
+      handleExitDeleteMode();
+
+      if (routine.new) {
+        deleteRoutine(routineId);
+      }
+    };
+  }, []));
+
+  const cancel = () => {
+    confirmDirty(() => {
+      if (routine.new) {
+        deleteRoutineAndBack();
+        return;
+      }
+
+      navigation.goBack();
+    });
+  };
+
   const save = async () => {
-    await updateRoutine(routine);
+    await saveRoutine();
     navigation.goBack();
   };
 
@@ -63,21 +119,7 @@ function RoutineEditScreen({ route, navigation }) {
   };
 
   const addRoutineItem = () => {
-    if (isDirty) {
-      Alert.alert("Save Changes", "You have unsaved changes. Would you like to save them?", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text    : "Save",
-          onPress : async () => {
-            await updateRoutine(routine);
-            await setIsDirty(false);
-            navigation.navigate("AddRoutineItem", { routineId });
-          },
-        },
-      ]);
-    } else {
-      navigation.navigate("AddRoutineItem", { routineId });
-    }
+    confirmDirty(() => { navigation.navigate("AddRoutineItem", { routineId }); });
   };
 
   const moveRoutineItemUp = (itemId) => {
@@ -96,26 +138,14 @@ function RoutineEditScreen({ route, navigation }) {
   const editRoutineItem = (itemId) => {
     const item = routine.items.find((current) => current.id === itemId);
 
-    if (isDirty) {
-      Alert.alert("Save Changes", "You have unsaved changes. Would you like to save them?", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text    : "Save",
-          onPress : async () => {
-            await updateRoutine(routine);
-            await setIsDirty(false);
-            navigation.navigate("EditRoutineItem", { routineId, item, isCustom: false });
-          },
-        },
-      ]);
-    } else {
-      navigation.navigate("EditRoutineItem", { routineId, item, isCustom: false });
-    }
+    confirmDirty(() => { navigation.navigate("EditRoutineItem", { routineId, item, isCustom: false }); });
   };
 
-  const deleteRoutineAndBack = async () => {
-    await deleteRoutine(routineId);
-    navigation.goBack();
+  const deleteItem = () => {
+    const newItems = routine.items.filter((item) => item.id !== selectedRoutineItemId);
+    setRoutine({ ...routine, items: newItems });
+    setIsDeleteMode(false);
+    setSelectedRoutineItem(null);
   };
 
   const confirmDelete = () => {
@@ -125,22 +155,31 @@ function RoutineEditScreen({ route, navigation }) {
     ]);
   };
 
-  const start = () => {
-    if (isDirty) {
-      Alert.alert("Save Changes", "You have unsaved changes. Would you like to save them?", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text    : "Save",
-          onPress : async () => {
-            await updateRoutine(routine);
-            await setIsDirty(false);
-            navigation.navigate("RoutineStart", { routineId });
-          },
-        },
-      ]);
-    } else {
-      navigation.navigate("RoutineStart", { routineId });
+  const confirmDeleteItem = () => {
+    Alert.alert("Delete Routine", "Are you sure you want to delete this task?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteItem() },
+    ]);
+  };
+
+  const handlePress = (routineItemId) => {
+    if (isDeleteMode) {
+      setIsDeleteMode(false);
+      setSelectedRoutineItem(null);
+      return;
     }
+
+    editRoutineItem(routineItemId);
+  };
+
+  const handleLongPress = (routineItemId) => {
+    Vibration.vibrate(50);
+    setSelectedRoutineItem(routineItemId);
+    setIsDeleteMode(true);
+  };
+
+  const start = () => {
+    confirmDirty(() => { navigation.navigate("RoutineStart", { routineId }); });
   };
 
   const updateName = (value) => {
@@ -171,13 +210,17 @@ function RoutineEditScreen({ route, navigation }) {
 
   const headerRight = () => (
     <View style={styles.headerRightContainer}>
-      <HeaderButton icon="save" text="Save" onPress={save} />
+      {isDeleteMode ? (
+        <HeaderButton icon="trash" text="Delete" color={colors.delete} onPress={confirmDeleteItem} />
+      ) : (
+        <HeaderButton icon="save" text="Save" onPress={save} />
+      )}
     </View>
   );
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: "", headerLeft, headerRight });
-  }, [navigation, isDarkMode, routine]);
+  }, [navigation, isDarkMode, routine, isDeleteMode, selectedRoutineItemId]);
 
   const openRoutineButton = (
     <View style={routine.enabled ? null : styles.disabled}>
@@ -194,7 +237,7 @@ function RoutineEditScreen({ route, navigation }) {
         <TextInput
           style={[styles.text, styles.input]}
           placeholder="New Routine"
-          value={routine.name !== "New Routine" ? routine.name : ""}
+          value={routine.name}
           onChangeText={updateName}
           placeholderTextColor={colors.mediumOpacity}
           multiline
@@ -251,10 +294,14 @@ function RoutineEditScreen({ route, navigation }) {
         </View>
 
         <View style={[styles.daysContainer, routine.enabled ? null : styles.disabled]}>
-          {Object.keys(routine.days).map((day) => (
+          {Object.keys(routine.days).map((day, index) => (
             <TouchableOpacity
               key={day}
-              style={[styles.dayButton, routine.days[day] ? styles.dayButtonSelected : null]}
+              style={[
+                styles.dayButton,
+                routine.days[day] ? styles.dayButtonSelected : null,
+                index === 0 ? styles.dayButtonFirst : null,
+              ]}
               onPress={() => toggleDay(day)}
               disabled={!routine.enabled}
             >
@@ -264,17 +311,32 @@ function RoutineEditScreen({ route, navigation }) {
         </View>
 
         <View style={[styles.routineItemsContainer, routine.enabled ? null : styles.disabled]}>
-          {routine.items.map((item) => (
-            <View style={styles.routineEditItemContainer} key={item.id}>
-              <TouchableOpacity style={styles.buttonIconOnly} onPress={() => moveRoutineItemUp(item.id)} disabled={!routine.enabled}>
-                <FontAwesome5 name="arrow-alt-circle-up" size={20} color={colors.highOpacity} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.routineEditItemContainerRight} onPress={() => editRoutineItem(item.id)} disabled={!routine.enabled}>
-                <RoutineItem item={item} />
-              </TouchableOpacity>
-            </View>
-          ))}
+          {routine.items.map((item) => {
+            // eslint-disable-next-line no-nested-ternary
+            const itemOpacity = isDeleteMode ? (selectedRoutineItemId === item.id ? 1 : 0.5) : 1;
+            return (
+              <View style={[styles.routineEditItemContainer, { opacity: itemOpacity }]} key={item.id}>
+                <TouchableOpacity style={styles.buttonIconOnly} onPress={() => moveRoutineItemUp(item.id)} disabled={!routine.enabled}>
+                  <FontAwesome5 name="arrow-alt-circle-up" size={20} color={colors.highOpacity} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.routineEditItemContainerRight}
+                  onPress={() => handlePress(item.id)}
+                  onLongPress={() => handleLongPress(item.id)}
+                  disabled={!routine.enabled}
+                >
+                  <RoutineItem item={item} />
+                </TouchableOpacity>
+              </View>
+            ); })}
         </View>
+
+        {routine.items.length === 0 && (
+          <View style={styles.centerContainer}>
+            <Text style={[styles.text, styles.emptyRoutineTitle]}>No Task Yet!</Text>
+            <Text style={[styles.text, styles.emptyRoutineText]}>{"Tap the + Add Task button\nbelow to create one."}</Text>
+          </View>
+        )}
 
         <View style={styles.spacer} />
 

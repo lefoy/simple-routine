@@ -8,16 +8,18 @@ import getStyles from "../styles";
 import getColors from "../styles/colors";
 
 function HeaderButton({
-  icon, text, onPress, disabled,
+  icon, text, onPress, disabled, color,
 }) {
   const { isDarkMode } = useTheme();
   const styles         = getStyles({ isDarkMode });
   const colors         = getColors({ isDarkMode });
 
+  if (color === null) color = colors.text;
+
   return (
     <TouchableOpacity onPress={onPress} style={styles.headerButton} disabled={disabled}>
-      <FontAwesome5 name={icon} size={16} color={colors.text} />
-      <Text style={[styles.text, styles.headerButtonText]}>{text}</Text>
+      <FontAwesome5 name={icon} size={16} color={color} />
+      <Text style={[styles.text, styles.headerButtonText, { color }]}>{text}</Text>
     </TouchableOpacity>
   );
 }
@@ -27,10 +29,12 @@ HeaderButton.propTypes = {
   text     : PropTypes.string.isRequired,
   onPress  : PropTypes.func.isRequired,
   disabled : PropTypes.bool,
+  color    : PropTypes.string,
 };
 
 HeaderButton.defaultProps = {
-  disabled: false,
+  disabled : false,
+  color    : null,
 };
 
 export default HeaderButton;

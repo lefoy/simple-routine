@@ -7,7 +7,7 @@ import { Text, StatusBar } from "react-native";
 import * as Font from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 import { ThemeProvider, useTheme } from "./ThemeContext";
 import getStyles from "./styles";
@@ -65,7 +65,8 @@ function App() {
   const { isDarkMode } = useTheme();
   const styles         = getStyles({ isDarkMode });
 
-  const navigationRef = React.createRef();
+  const navigationRef                             = useRef(null);
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   const [fontsLoaded, setFontsLoaded]               = useState(false);
   const [isFullscreenEnabled, setFullscreenEnabled] = useState(false);
@@ -85,6 +86,17 @@ function App() {
 
   fetchSettings();
 
+  useEffect(() => {
+    if (isNavigationReady) {
+      const listener = registerNotificationHandler(navigationRef);
+      return () => {
+        listener.remove();
+      };
+    }
+
+    return undefined;
+  }, [isNavigationReady]);
+
   // Load fonts
   useEffect(() => {
     async function loadFonts() {
@@ -96,13 +108,7 @@ function App() {
       setFontsLoaded(true);
     }
 
-    const listener = registerNotificationHandler(navigationRef);
-
     loadFonts();
-
-    return () => {
-      listener.remove();
-    };
   }, []);
 
   useEffect(() => {
@@ -145,7 +151,11 @@ function App() {
         barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor={isDarkMode ? "black" : "white"}
       />
-      <NavigationContainer theme={Theme} ref={navigationRef}>
+      <NavigationContainer
+        theme={Theme}
+        ref={navigationRef}
+        onReady={() => setIsNavigationReady(true)}
+      >
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerStyle             : styles.header,

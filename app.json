@@ -2,14 +2,14 @@
   "expo": {
     "name": "Simple Routine",
     "slug": "simpleroutine",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -18,11 +18,8 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
-      },
-      "package": "com.lefoy.simpleroutine"
+      "package": "com.lefoy.simpleroutine",
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

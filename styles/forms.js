@@ -64,9 +64,13 @@ const forms = (theme) => {
       width           : 46,
       height          : 46,
       borderRadius    : 24,
+      marginLeft      : 6,
       justifyContent  : "center",
       alignItems      : "center",
       backgroundColor : colors.lowOpacity,
+    },
+    dayButtonFirst: {
+      marginLeft: 0,
     },
     smallDayButton: {
       width           : 30,
@@ -101,21 +105,25 @@ const forms = (theme) => {
       justifyContent : "center",
     },
     circleDialTitle: {
-      fontSize   : 20,
-      fontFamily : "Poppins-Black",
-      textAlign  : "center",
+      fontSize     : 20,
+      fontFamily   : "Poppins-Black",
+      textAlign    : "center",
+      marginBottom : -16,
     },
     circleDialText: {
-      fontSize   : 80,
-      fontFamily : "Poppins-Black",
-      textAlign  : "center",
-      marginTop  : "-5%",
+      fontSize           : 80,
+      height             : 120,
+      lineHeight         : 120,
+      fontFamily         : "Poppins-Black",
+      textAlign          : "center",
+      textAlignVertical  : "center",
+      includeFontPadding : false,
     },
     circleDialUnit: {
       fontSize   : 20,
       fontFamily : "Poppins-Black",
       textAlign  : "center",
-      marginTop  : "-10%",
+      marginTop  : -16,
     },
   };
 };
