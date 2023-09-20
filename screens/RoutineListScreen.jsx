@@ -1,11 +1,17 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import PropTypes from "prop-types";
+import React, { useLayoutEffect, useState } from "react";
 import {
-  View, Text, FlatList, TouchableOpacity, Alert, Vibration,
+  Alert,
+  Text,
+  TouchableOpacity,
+  Vibration,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useLayoutEffect } from "react";
+import DraggableFlatList from "react-native-draggable-flatlist";
 
+import { SplashScreen } from "expo-router";
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
 import getColors from "../styles/colors";
@@ -15,7 +21,7 @@ import Loading from "../components/Loading";
 import RoutineInProgressBar from "../components/RoutineInProgressBar";
 import RoutineStats from "../components/RoutineStats";
 
-import { getRoutineStructure, addRoutine, deleteRoutine } from "../lib/routine";
+import { addRoutine, deleteRoutine, getRoutineStructure } from "../lib/routine";
 
 function RoutineListScreen({ navigation }) {
   const { isDarkMode } = useTheme();
@@ -55,14 +61,25 @@ function RoutineListScreen({ navigation }) {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchSettings();
-      fetchRoutines();
-      setIsLoading(false);
+      Promise.all([fetchSettings(), fetchRoutines()]).then(() => {
+        setIsLoading(false);
+        SplashScreen.hideAsync();
+      });
 
       // Reset the delete mode when leaving the screen
       return () => handleExitDeleteMode();
     }, []),
   );
+
+  const updateRoutinesOrder = (newData) => {
+    const hasChanged = JSON.stringify(routines) !== JSON.stringify(newData);
+
+    if (hasChanged) {
+      setRoutines(newData);
+      AsyncStorage.setItem("routines", JSON.stringify(newData));
+      setIsDeleteMode(false);
+    }
+  };
 
   const createNewRoutine = async () => {
     const newRoutine = {
@@ -90,7 +107,11 @@ function RoutineListScreen({ navigation }) {
 
   const headerLeft = () => (
     <View style={styles.headerLeftContainer}>
-      <Text style={[styles.text, styles.headerTitle]}>Routines</Text>
+      {isDeleteMode ? (
+        <HeaderButton icon="times" text="Cancel" onPress={handleExitDeleteMode} />
+      ) : (
+        <Text style={[styles.text, styles.headerTitle]}>Routines</Text>
+      )}
     </View>
   );
 
@@ -103,12 +124,6 @@ function RoutineListScreen({ navigation }) {
       )}
     </View>
   );
-
-  const handleLongPress = (routineId) => {
-    Vibration.vibrate(50);
-    setSelectedRoutine(routineId);
-    setIsDeleteMode(true);
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: "", headerLeft, headerRight });
@@ -124,16 +139,18 @@ function RoutineListScreen({ navigation }) {
     navigation.navigate("EditRoutine", { routineId });
   };
 
-  const renderRoutine = ({ item }) => {
+  const renderRoutine = ({ item, drag }) => {
     const selectedDays = item.days;
-    // eslint-disable-next-line no-nested-ternary
-    const itemOpacity = isDeleteMode ? (selectedRoutineId === item.id ? 1 : 0.3) : 1;
+    const startDrag    = () => {
+      Vibration.vibrate(50);
+      drag();
+    };
 
     return (
       <TouchableOpacity
-        style={[styles.routineContainer, { opacity: itemOpacity }]}
+        style={styles.routineContainer}
         onPress={() => handlePress(item.id)}
-        onLongPress={() => handleLongPress(item.id)}
+        onLongPress={startDrag}
       >
         {isShowDaysInList && (
           <View style={styles.routineContainerTop}>
@@ -165,21 +182,25 @@ function RoutineListScreen({ navigation }) {
   return (
     <>
       <View style={styles.container}>
-        <FlatList
-          data={routines}
-          renderItem={renderRoutine}
-          keyExtractor={(item) => item.id}
-        />
+        <View style={{ flex: 1 }}>
+          <DraggableFlatList
+            data={routines}
+            renderItem={renderRoutine}
+            keyExtractor={(item) => `draggable-item-${item.id}`}
+            onDragEnd={({ data }) => updateRoutinesOrder(data)}
+          />
 
-        <RoutineInProgressBar navigation={navigation} />
-
-        {routines.length === 0 && (
-          <View style={styles.emptyRoutineContainer}>
-            <Text style={[styles.text, styles.emptyRoutineTitle]}>No Routines Yet!</Text>
-            <Text style={[styles.text, styles.emptyRoutineText]}>Tap the + New button to create one.</Text>
-          </View>
-        )}
-
+          {routines.length === 0 && (
+            <View style={styles.emptyRoutineContainer}>
+              <Text style={[styles.text, styles.emptyRoutineTitle]}>No Routines Yet!</Text>
+              <Text style={[styles.text, styles.emptyRoutineText]}>Tap the + New button to create one.</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.spacer} />
+        <View style={{ flex: 0 }}>
+          <RoutineInProgressBar navigation={navigation} />
+        </View>
       </View>
       {isLoading && <Loading />}
     </>

@@ -1,35 +1,39 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome5 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Text, StatusBar } from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
 import * as Font from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useRef, useState, useEffect } from "react";
+import { SplashScreen } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { StatusBar, Text } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ThemeProvider, useTheme } from "./ThemeContext";
 import getStyles from "./styles";
 
+import Loading from "./components/Loading";
 import AddRoutineItemScreen from "./screens/AddRoutineItemScreen";
 import AnalyticsScreen from "./screens/AnalyticsScreen";
-import Loading from "./components/Loading";
+import DebugScreen from "./screens/DebugScreen";
 import RoutineCompletedScreen from "./screens/RoutineCompletedScreen";
-import RoutineSuggestionsScreen from "./screens/RoutineSuggestionsScreen";
 import RoutineEditItemScreen from "./screens/RoutineEditItemScreen";
 import RoutineEditScreen from "./screens/RoutineEditScreen";
 import RoutineListScreen from "./screens/RoutineListScreen";
 import RoutineScreen from "./screens/RoutineScreen";
 import RoutineStartScreen from "./screens/RoutineStartScreen";
+import RoutineSuggestionsScreen from "./screens/RoutineSuggestionsScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 
+import { askForNotificationPermission, registerNotificationHandler } from "./lib/notifications";
 import { initRoutineTasks } from "./lib/routine";
 import { initSettings } from "./lib/settings";
-import { askForNotificationPermission, registerNotificationHandler } from "./lib/notifications";
 
 const Tab          = createBottomTabNavigator();
 const RoutineStack = createStackNavigator();
+
+SplashScreen.preventAutoHideAsync();
 
 function RoutineStackScreen() {
   const { isDarkMode } = useTheme();
@@ -55,11 +59,29 @@ function RoutineStackScreen() {
   );
 }
 
+function SettingsStackScreen() {
+  const { isDarkMode } = useTheme();
+  const styles         = getStyles({ isDarkMode });
+
+  return (
+    <RoutineStack.Navigator
+      screenOptions={{
+        headerStyle      : styles.header,
+        headerTitleStyle : styles.headerTitle,
+        headerTintColor  : styles.headerTintColor,
+      }}
+    >
+      <RoutineStack.Screen name="EditSettings" component={SettingsScreen} />
+      <RoutineStack.Screen name="Debug" component={DebugScreen} />
+    </RoutineStack.Navigator>
+  );
+}
+
 // Load default data
 initRoutineTasks();
-initSettings();
-
-askForNotificationPermission();
+askForNotificationPermission((notificationPermissionGranted) => {
+  initSettings(notificationPermissionGranted);
+});
 
 function App() {
   const { isDarkMode } = useTheme();
@@ -170,7 +192,7 @@ function App() {
         >
           <Tab.Screen name="Routines" component={RoutineStackScreen} options={{ headerShown: false }} />
           <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-          <Tab.Screen name="Settings" component={SettingsScreen} />
+          <Tab.Screen name="Settings" component={SettingsStackScreen} options={{ headerShown: false }} />
         </Tab.Navigator>
       </NavigationContainer>
     </>

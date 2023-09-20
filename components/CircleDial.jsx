@@ -1,13 +1,16 @@
 import PropTypes from "prop-types";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Text, View, PanResponder, TextInput,
+  PanResponder,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 
-import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
 import getColors from "../styles/colors";
+import { useTheme } from "../ThemeContext";
 
 function CircleDial({
   title, value, max, unit, onChange,

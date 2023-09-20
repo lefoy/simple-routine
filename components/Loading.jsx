@@ -1,8 +1,12 @@
+import { FontAwesome } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
 import Animated, {
-  Easing, withRepeat, useSharedValue, useAnimatedStyle, withTiming,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
 } from "react-native-reanimated";
 
 import { useTheme } from "../ThemeContext";

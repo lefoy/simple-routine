@@ -1,15 +1,21 @@
-import React, { useState, useLayoutEffect } from "react";
-import {
-  View, Text, TextInput, TouchableOpacity, Alert, Switch, ScrollView, Vibration,
-} from "react-native";
-import PropTypes from "prop-types";
-import { useFocusEffect } from "@react-navigation/native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { Picker } from "@react-native-picker/picker";
+import { useFocusEffect } from "@react-navigation/native";
+import PropTypes from "prop-types";
+import React, { useLayoutEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Switch,
+  Text, TextInput, TouchableOpacity,
+  Vibration,
+  View,
+} from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
+
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
+import getColors from "../styles/colors";
 
 import HeaderButton from "../components/HeaderButton";
 import Loading from "../components/Loading";
@@ -17,7 +23,6 @@ import RoutineInProgressBar from "../components/RoutineInProgressBar";
 import RoutineItem from "../components/RoutineItem";
 
 import { deleteRoutine, getRoutineStructure, updateRoutine } from "../lib/routine";
-import getColors from "../styles/colors";
 
 function RoutineEditScreen({ route, navigation }) {
   const { isDarkMode } = useTheme();
@@ -122,19 +127,6 @@ function RoutineEditScreen({ route, navigation }) {
     confirmDirty(() => { navigation.navigate("AddRoutineItem", { routineId }); });
   };
 
-  const moveRoutineItemUp = (itemId) => {
-    const itemIndex = routine.items.findIndex((current) => current.id === itemId);
-    if (itemIndex > 0) {
-      const newItems          = [...routine.items];
-      const temp              = newItems[itemIndex - 1];
-      newItems[itemIndex - 1] = newItems[itemIndex];
-      newItems[itemIndex]     = temp;
-
-      setRoutine({ ...routine, items: newItems });
-      setIsDirty(true);
-    }
-  };
-
   const editRoutineItem = (itemId) => {
     const item = routine.items.find((current) => current.id === itemId);
 
@@ -172,12 +164,6 @@ function RoutineEditScreen({ route, navigation }) {
     editRoutineItem(routineItemId);
   };
 
-  const handleLongPress = (routineItemId) => {
-    Vibration.vibrate(50);
-    setSelectedRoutineItem(routineItemId);
-    setIsDeleteMode(true);
-  };
-
   const start = () => {
     confirmDirty(() => { navigation.navigate("RoutineStart", { routineId }); });
   };
@@ -202,9 +188,22 @@ function RoutineEditScreen({ route, navigation }) {
     setIsDirty(true);
   };
 
+  const updateRoutineItemsOrder = (newItems) => {
+    const hasChanged = JSON.stringify(routine.items) !== JSON.stringify(newItems);
+
+    if (hasChanged) {
+      setRoutine({ ...routine, items: newItems });
+      setIsDirty(true);
+    }
+  };
+
   const headerLeft = () => (
     <View style={styles.headerLeftContainer}>
-      <HeaderButton icon="times" text="Cancel" onPress={cancel} />
+      {isDeleteMode ? (
+        <HeaderButton icon="times" text="Cancel" onPress={handleExitDeleteMode} />
+      ) : (
+        <HeaderButton icon="times" text="Cancel" onPress={cancel} />
+      )}
     </View>
   );
 
@@ -231,133 +230,152 @@ function RoutineEditScreen({ route, navigation }) {
     </View>
   );
 
-  return (
+  const renderHeader = useMemo(() => (
     <>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContentContainer}>
-        <TextInput
-          style={[styles.text, styles.input]}
-          placeholder="New Routine"
-          value={routine.name}
-          onChangeText={updateName}
-          placeholderTextColor={colors.mediumOpacity}
-          multiline
+      <TextInput
+        style={[styles.text, styles.input]}
+        placeholder="New Routine"
+        value={routine.name}
+        onChangeText={updateName}
+        placeholderTextColor={colors.mediumOpacity}
+        multiline
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.text, styles.label]}>Enable Routine</Text>
+        <Switch
+          value={routine.enabled}
+          onValueChange={updateEnabled}
+          trackColor={{
+            false : colors.mediumOpacity,
+            true  : colors.text,
+          }}
+          thumbColor={colors.text}
         />
+      </View>
 
-        <View style={styles.switchContainer}>
-          <Text style={[styles.text, styles.label]}>Enable Routine</Text>
-          <Switch
-            value={routine.enabled}
-            onValueChange={updateEnabled}
-            trackColor={{
-              false : colors.mediumOpacity,
-              true  : colors.text,
-            }}
-            thumbColor={colors.text}
-          />
-        </View>
-
-        <View style={[styles.row, routine.enabled ? null : styles.disabled]}>
-          <Text style={[styles.text, styles.label]}>Time Start</Text>
-          <View style={styles.timePickerContainer}>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={routine.hour}
-                style={styles.picker}
-                onValueChange={updateHour}
-                enabled={routine.enabled}
-              >
-                {
-                  Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((item) => (
-                    <Picker.Item key={item} label={item} value={item} />
-                  ))
-                }
-              </Picker>
-              <Text style={[styles.text, styles.pickerValue]}>{routine.hour}</Text>
-            </View>
-            <Text style={[styles.text, styles.pickerValue]}>:</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={routine.minute}
-                style={styles.picker}
-                onValueChange={updateMinute}
-                enabled={routine.enabled}
-              >
-                {
-                  Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((item) => (
-                    <Picker.Item key={item} label={item} value={item} />
-                  ))
-                }
-              </Picker>
-              <Text style={[styles.text, styles.pickerValue]}>{routine.minute}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.daysContainer, routine.enabled ? null : styles.disabled]}>
-          {Object.keys(routine.days).map((day, index) => (
-            <TouchableOpacity
-              key={day}
-              style={[
-                styles.dayButton,
-                routine.days[day] ? styles.dayButtonSelected : null,
-                index === 0 ? styles.dayButtonFirst : null,
-              ]}
-              onPress={() => toggleDay(day)}
-              disabled={!routine.enabled}
+      <View style={[styles.row, routine.enabled ? null : styles.disabled]}>
+        <Text style={[styles.text, styles.label]}>Time Start</Text>
+        <View style={styles.timePickerContainer}>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={routine.hour}
+              style={styles.picker}
+              onValueChange={updateHour}
+              enabled={routine.enabled}
             >
-              <Text style={[styles.dayButtonText, routine.days[day] ? styles.dayButtonTextSelected : null]}>{day[0].toUpperCase()}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={[styles.routineItemsContainer, routine.enabled ? null : styles.disabled]}>
-          {routine.items.map((item) => {
-            // eslint-disable-next-line no-nested-ternary
-            const itemOpacity = isDeleteMode ? (selectedRoutineItemId === item.id ? 1 : 0.5) : 1;
-            return (
-              <View style={[styles.routineEditItemContainer, { opacity: itemOpacity }]} key={item.id}>
-                <TouchableOpacity style={styles.buttonIconOnly} onPress={() => moveRoutineItemUp(item.id)} disabled={!routine.enabled}>
-                  <FontAwesome5 name="arrow-alt-circle-up" size={20} color={colors.highOpacity} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.routineEditItemContainerRight}
-                  onPress={() => handlePress(item.id)}
-                  onLongPress={() => handleLongPress(item.id)}
-                  disabled={!routine.enabled}
-                >
-                  <RoutineItem item={item} />
-                </TouchableOpacity>
-              </View>
-            ); })}
-        </View>
-
-        {routine.items.length === 0 && (
-          <View style={styles.centerContainer}>
-            <Text style={[styles.text, styles.emptyRoutineTitle]}>No Task Yet!</Text>
-            <Text style={[styles.text, styles.emptyRoutineText]}>{"Tap the + Add Task button\nbelow to create one."}</Text>
+              {
+                Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((item) => (
+                  <Picker.Item key={item} label={item} value={item} />
+                ))
+              }
+            </Picker>
+            <Text style={[styles.text, styles.pickerValue]}>{routine.hour}</Text>
           </View>
-        )}
+          <Text style={[styles.text, styles.pickerValue]}>:</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={routine.minute}
+              style={styles.picker}
+              onValueChange={updateMinute}
+              enabled={routine.enabled}
+            >
+              {
+                Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((item) => (
+                  <Picker.Item key={item} label={item} value={item} />
+                ))
+              }
+            </Picker>
+            <Text style={[styles.text, styles.pickerValue]}>{routine.minute}</Text>
+          </View>
+        </View>
+      </View>
 
-        <View style={styles.spacer} />
-
-        <View style={[routine.enabled ? null : styles.disabled]}>
-          <TouchableOpacity style={styles.buttonOutline} onPress={addRoutineItem} disabled={!routine.enabled}>
-            <FontAwesome5 style={styles.buttonOutlineIcon} name="plus" size={20} color={colors.text} />
-            <Text style={[styles.text, styles.buttonOutlineText]}>Add Task</Text>
+      <View style={[styles.daysContainer, routine.enabled ? null : styles.disabled]}>
+        {Object.keys(routine.days).map((day, index) => (
+          <TouchableOpacity
+            key={day}
+            style={[
+              styles.dayButton,
+              routine.days[day] ? styles.dayButtonSelected : null,
+              index === 0 ? styles.dayButtonFirst : null,
+            ]}
+            onPress={() => toggleDay(day)}
+            disabled={!routine.enabled}
+          >
+            <Text style={[styles.dayButtonText, routine.days[day] ? styles.dayButtonTextSelected : null]}>{day[0].toUpperCase()}</Text>
           </TouchableOpacity>
-        </View>
+        ))}
+      </View>
+    </>
+  ), [routine, colors]);
 
-        <View style={styles.paddingContainer}>
-          <RoutineInProgressBar navigation={navigation} fallbackComponent={openRoutineButton} />
-        </View>
+  const renderFooter = () => (
+    <>
+      <View style={[routine.enabled ? null : styles.disabled]}>
+        <TouchableOpacity style={styles.buttonOutline} onPress={addRoutineItem} disabled={!routine.enabled}>
+          <FontAwesome5 style={styles.buttonOutlineIcon} name="plus" size={20} color={colors.text} />
+          <Text style={[styles.text, styles.buttonOutlineText]}>Add Task</Text>
+        </TouchableOpacity>
+      </View>
 
+      <View style={styles.paddingContainer}>
         <View style={styles.deleteButtonContainer}>
           <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={confirmDelete}>
             <FontAwesome5 style={styles.buttonIcon} name="trash-alt" size={20} color={colors.delete} />
             <Text style={[styles.text, styles.deleteButtonText]}>Delete Routine</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
+    </>
+  );
+
+  const renderEmptyComponent = () => (
+    <View style={[styles.emptyContainer, routine.enabled ? null : styles.disabled]}>
+      <Text style={[styles.text, styles.emptyRoutineTitle]}>No Task Yet!</Text>
+      <Text style={[styles.text, styles.emptyRoutineText]}>{"Tap the + Add Task button\nbelow to create one."}</Text>
+    </View>
+  );
+
+  const renderItem = ({ item, drag }) => {
+    const startDrag = () => {
+      Vibration.vibrate(50);
+      drag();
+    };
+
+    return (
+      <TouchableOpacity
+        style={[styles.routineEditItemContainer, routine.enabled ? null : styles.disabled]}
+        onPress={() => handlePress(item.id)}
+        onLongPress={startDrag}
+        disabled={!routine.enabled}
+      >
+        <RoutineItem item={item} />
+      </TouchableOpacity>
+    ); };
+
+  return (
+    <>
+      <View style={styles.container}>
+        <View style={{ flex: 1 }}>
+          <DraggableFlatList
+            data={routine.items}
+            renderItem={renderItem}
+            ListHeaderComponent={renderHeader}
+            ListFooterComponent={renderFooter}
+            ListFooterComponentStyle={styles.listFooter}
+            ListEmptyComponent={renderEmptyComponent}
+            keyExtractor={(item) => `draggable-item-${item.id}`}
+            onDragEnd={({ data }) => updateRoutineItemsOrder(data)}
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContentContainer}
+          />
+        </View>
+        <View style={styles.spacer} />
+        <View style={{ flex: 0 }}>
+          <RoutineInProgressBar navigation={navigation} fallbackComponent={openRoutineButton} />
+        </View>
+      </View>
       {isLoading && <Loading />}
     </>
   );

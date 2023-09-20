@@ -25,7 +25,7 @@ const forms = (theme) => {
     },
     dialContainer: {
       width          : "100%",
-      marginVertical : 20,
+      marginVertical : 16,
     },
     label: {
       fontSize   : 20,

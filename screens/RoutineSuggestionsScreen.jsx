@@ -1,11 +1,13 @@
+import { FontAwesome5 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import PropTypes from "prop-types";
 import React, { useLayoutEffect, useState } from "react";
 import {
-  View, Text, TouchableOpacity, Alert, ScrollView,
+  Alert, ScrollView,
+  Text, TouchableOpacity,
+  View,
 } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";

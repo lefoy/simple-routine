@@ -1,11 +1,12 @@
-import PropTypes from "prop-types";
-import React, { useState, useLayoutEffect } from "react";
-import { View, Text, ScrollView } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import PropTypes from "prop-types";
+import React, { useLayoutEffect, useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
+
 import Loading from "../components/Loading";
 
 function AnalyticsScreen({ navigation }) {

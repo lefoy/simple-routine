@@ -9,13 +9,26 @@ const base = (theme) => {
       paddingHorizontal : 16,
       backgroundColor   : colors.background,
     },
+    scrollContainer: {
+      minHeight: "100%",
+    },
     scrollContentContainer: {
       minHeight: "100%",
+    },
+    listFooter: {
+      flex           : 1,
+      justifyContent : "flex-end",
     },
     centerContainer: {
       flex           : 1,
       justifyContent : "center",
       alignItems     : "center",
+    },
+    emptyContainer: {
+      flex            : 1,
+      paddingVertical : 32,
+      alignItems      : "center",
+      justifyContent  : "center",
     },
     row: {
       flexDirection  : "row",
@@ -71,6 +84,9 @@ const base = (theme) => {
     },
     paddingContainer: {
       paddingVertical: 8,
+    },
+    deleteButtonContainer: {
+      paddingBottom: 16,
     },
   };
 };

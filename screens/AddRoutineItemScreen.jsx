@@ -1,20 +1,24 @@
-import PropTypes from "prop-types";
-import {
-  View, TouchableOpacity, ScrollView, Alert, TextInput,
-} from "react-native";
-import React, { useEffect, useState, useLayoutEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome5 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import PropTypes from "prop-types";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
+import getColors from "../styles/colors";
 
 import HeaderButton from "../components/HeaderButton";
+import Loading from "../components/Loading";
+import RoutineItem from "../components/RoutineItem";
 
 import { getRoutineItemStructure, updateRoutineItem } from "../lib/routine";
-import RoutineItem from "../components/RoutineItem";
-import Loading from "../components/Loading";
-import getColors from "../styles/colors";
 
 function AddRoutineItemScreen({ route, navigation }) {
   const { isDarkMode } = useTheme();
@@ -139,7 +143,7 @@ function AddRoutineItemScreen({ route, navigation }) {
       <View style={styles.routineItemsSectionContainer}>
         {filteredTasks.default.map((item) => (
           <View style={styles.routineAddItemContainer} key={`${item.emoji}-${item.avgTime}-${item.id}`}>
-            <TouchableOpacity style={styles.routineEditItemContainerRight} onPress={() => addTaskToRoutine(item)}>
+            <TouchableOpacity style={styles.routineAddItemContainerLeft} onPress={() => addTaskToRoutine(item)}>
               <RoutineItem item={item} />
             </TouchableOpacity>
           </View>

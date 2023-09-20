@@ -1,8 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";

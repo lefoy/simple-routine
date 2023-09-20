@@ -1,16 +1,16 @@
+import { FontAwesome5 } from "@expo/vector-icons";
+import { ResizeMode, Video } from "expo-av";
 import PropTypes from "prop-types";
 import React, { useLayoutEffect } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { Video, ResizeMode } from "expo-av";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
+import getColors from "../styles/colors";
 
 import HeaderButton from "../components/HeaderButton";
 
 import { clearAllNotifications } from "../lib/notifications";
-import getColors from "../styles/colors";
 
 function RoutineCompletedScreen({ route, navigation }) {
   const { isDarkMode } = useTheme();

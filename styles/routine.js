@@ -48,7 +48,6 @@ const routine = (theme) => {
       fontSize   : 30,
       fontFamily : "Poppins-Black",
       color      : colors.text,
-      // marginTop  : 16,
     },
     routineNextItemTitle: {
       fontSize   : 16,

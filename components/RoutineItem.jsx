@@ -1,7 +1,7 @@
+import { FontAwesome5 } from "@expo/vector-icons";
 import PropTypes from "prop-types";
 import React from "react";
 import { Text, View } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";

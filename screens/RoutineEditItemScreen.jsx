@@ -1,17 +1,21 @@
-import PropTypes from "prop-types";
-import {
-  View, TextInput, Text, TouchableOpacity, Alert,
-} from "react-native";
-import React, { useState, useLayoutEffect } from "react";
 import { FontAwesome5 } from "@expo/vector-icons";
+import PropTypes from "prop-types";
+import React, { useLayoutEffect, useState } from "react";
+import {
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
 import getColors from "../styles/colors";
 
-import HeaderButton from "../components/HeaderButton";
-import EmojiPicker from "../components/EmojiPicker";
 import CircleDial from "../components/CircleDial";
+import EmojiPicker from "../components/EmojiPicker";
+import HeaderButton from "../components/HeaderButton";
 
 import { addCustomRoutineTask, deleteRoutineItem, updateRoutineItem } from "../lib/routine";
 

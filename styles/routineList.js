@@ -30,6 +30,7 @@ const routineList = (theme) => {
       paddingVertical   : 16,
       borderBottomWidth : 1,
       borderColor       : colors.lowOpacity,
+      backgroundColor   : colors.background,
     },
     routineEditItemContainer: {
       flexDirection     : "row",
@@ -104,7 +105,7 @@ const routineList = (theme) => {
       alignItems     : "center",
     },
     routineButtons: {
-      marginTop: 20,
+      marginTop: 16,
     },
     routineStatsContainer: {
       flexDirection : "row",

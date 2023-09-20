@@ -1,12 +1,18 @@
-import PropTypes from "prop-types";
-import React, { useState, useLayoutEffect } from "react";
-import {
-  View, Text, Switch, FlatList, StatusBar, TouchableOpacity, Alert,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome5 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import * as NavigationBar from "expo-navigation-bar";
+import PropTypes from "prop-types";
+import React, { useLayoutEffect, useState } from "react";
+import {
+  Alert,
+  FlatList, StatusBar,
+  Switch,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import uuid from "react-native-uuid";
 
 import { useTheme } from "../ThemeContext";
@@ -24,14 +30,24 @@ function SettingsScreen({ navigation }) {
   const styles                        = getStyles({ isDarkMode });
   const colors                        = getColors({ isDarkMode });
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [settings, setSettings]   = useState({
+  const [isLoading, setIsLoading]   = useState(true);
+  const [debugCount, setDebugCount] = useState(0);
+  const [settings, setSettings]     = useState({
     isStatusBarHidden     : false,
     isNavBarHidden        : false,
     isNotificationEnabled : false,
     isShowDaysInList      : false,
     isShowStatsInList     : false,
   });
+
+  const incrementDebugCount = () => {
+    setDebugCount(debugCount + 1);
+
+    if (debugCount === 9) {
+      navigation.navigate("Debug");
+      setDebugCount(0);
+    }
+  };
 
   const toggleSwitch = async (key) => {
     let newValue;
@@ -138,13 +154,15 @@ function SettingsScreen({ navigation }) {
 
   const headerLeft = () => (
     <View style={styles.headerLeftContainer}>
-      <Text style={[styles.text, styles.headerTitle]}>Settings</Text>
+      <TouchableWithoutFeedback onPress={incrementDebugCount}>
+        <Text style={[styles.text, styles.headerTitle]}>Settings</Text>
+      </TouchableWithoutFeedback>
     </View>
   );
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: "", headerLeft });
-  }, [navigation, isDarkMode]);
+  }, [navigation, isDarkMode, debugCount]);
 
   const renderSettingItem = ({ item }) => (
     <View style={styles.settingRow}>
@@ -186,14 +204,18 @@ function SettingsScreen({ navigation }) {
 
   return (
     <>
-      <FlatList
-        style={styles.container}
-        data={settingsData}
-        renderItem={renderSettingItem}
-        keyExtractor={() => uuid.v4()}
-        ItemSeparatorComponent={separator}
-        ListFooterComponent={renderFooter}
-      />
+      <View style={styles.container}>
+        <FlatList
+          data={settingsData}
+          renderItem={renderSettingItem}
+          keyExtractor={() => uuid.v4()}
+          ItemSeparatorComponent={separator}
+          ListFooterComponent={renderFooter}
+          ListFooterComponentStyle={styles.listFooter}
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContentContainer}
+        />
+      </View>
       {isLoading && <Loading />}
     </>
   );

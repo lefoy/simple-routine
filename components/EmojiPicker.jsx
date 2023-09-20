@@ -1,16 +1,20 @@
 import PropTypes from "prop-types";
 import React, { memo, useState } from "react";
 import {
-  View, Modal, TouchableOpacity, TextInput, Text, FlatList,
+  FlatList,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import { FontAwesome5 } from "@expo/vector-icons";
-
 import { useTheme } from "../ThemeContext";
-import getStyles from "../styles";
-
-import HeaderButton from "./HeaderButton";
 import { favoriteEmojis, routineEmojis } from "../lib/routineEmojis";
+import getStyles from "../styles";
 import getColors from "../styles/colors";
+import HeaderButton from "./HeaderButton";
 
 const Emoji = memo(({
   item, styles, colors, handleSelect,

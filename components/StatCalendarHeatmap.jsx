@@ -3,12 +3,10 @@ import CalendarHeatmap from "react-native-calendar-heatmap";
 
 import { ScrollView } from "react-native";
 import { useTheme } from "../ThemeContext";
-import getStyles from "../styles";
 import getColors from "../styles/colors";
 
 function StatCalendarHeatmap() {
   const { isDarkMode } = useTheme();
-  const styles         = getStyles({ isDarkMode });
   const colors         = getColors({ isDarkMode });
 
   const scrollRef = React.useRef();

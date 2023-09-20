@@ -1,19 +1,21 @@
-import PropTypes from "prop-types";
-import React, { useState, useLayoutEffect } from "react";
-import {
-  View, Text, TouchableOpacity, ScrollView,
-} from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import { FontAwesome5 } from "@expo/vector-icons";
+import PropTypes from "prop-types";
+import React, { useLayoutEffect, useState } from "react";
+import {
+  ScrollView,
+  Text, TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useTheme } from "../ThemeContext";
 import getStyles from "../styles";
 import getColors from "../styles/colors";
 
 import HeaderButton from "../components/HeaderButton";
-import RoutineItem from "../components/RoutineItem";
 import RoutineInProgressBar from "../components/RoutineInProgressBar";
+import RoutineItem from "../components/RoutineItem";
 
 import { getFormattedFinishTime, setRoutineItemEnabled, startRoutine } from "../lib/routine";
 

@@ -1,7 +1,7 @@
+import { FontAwesome5 } from "@expo/vector-icons";
 import PropTypes from "prop-types";
 import React from "react";
 import { View } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
 
 import getStyles from "../styles";
 import getColors from "../styles/colors";
@@ -59,7 +59,6 @@ function RoutineProgress({ items, currentIndex, isDarkMode }) {
       <View style={styles.routineProgressBarIcons}>
         {displayItems.map((item, index) => (
           <FontAwesome5
-            // eslint-disable-next-line react/no-array-index-key
             key={`${item.emoji}-${item.avgTime}-${item.id}`}
             style={styles.routineProgressBarIcon}
             name={item.emoji}
